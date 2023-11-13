@@ -65,7 +65,7 @@ if __name__ == '__main__':
     # Start multiple clients concurrently
     processes = []
     for client_id in range(1, num_clients + 1):
-        process = multiprocessing.Process(target=start_client_four_rw_attack, args=(client_id,))
+        process = multiprocessing.Process(target=start_client_three_lf_attack, args=(client_id,))
         processes.append(process)
         process.start()
 

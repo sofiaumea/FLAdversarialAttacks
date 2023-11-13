@@ -4,8 +4,8 @@ import statistics
 
 # Load data from the text files
 #data1 = np.loadtxt("/Users/sofialeksell/FLAdversarialAttacks-git/FLAdversarialAttacks/test_results_centralized.txt")
-data1 = np.loadtxt("/Users/sofialeksell/FLAdversarialAttacks-git/FLAdversarialAttacks/experimentEstate/test_results_clientadversarial.txt")
-data2 = np.loadtxt("/Users/sofialeksell/FLAdversarialAttacks-git/FLAdversarialAttacks/experimentEstate/test_results_client.txt")
+data1 = np.loadtxt("/Users/sofialeksell/FLAdversarialAttacks-git/FLAdversarialAttacks/experimentCali/test_results_clientadversarial.txt")
+data2 = np.loadtxt("/Users/sofialeksell/FLAdversarialAttacks-git/FLAdversarialAttacks/experimentCali/test_results_client.txt")
 
 
 # Create Boolean masks for negative and positive values

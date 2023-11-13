@@ -72,6 +72,7 @@ test_labels = test_features.pop('median_house_value')
 #print("train labels from client",client_id, " : ", train_labels)
 #print("test labels from client",client_id, " : ", test_labels)
 print("train features from client",client_id, " : ", train_features)
+
 # Normalization
 normalizer = tf.keras.layers.Normalization(axis=-1)
 normalizer.adapt(np.array(train_features))
@@ -89,18 +90,40 @@ dnn_model.compile(
     optimizer="Adam",
     loss="mae",
     metrics=[R2Score(name='r2_score'), MeanAbsolutePercentageError(name='mape')])
+    
+# Function to shuffle "MPG" values
+def flip_labels(labels):
+    flipped_labels = np.random.permutation(labels)
+    return flipped_labels
 
+
+    
 class FlowerClient(fl.client.NumPyClient):
+    print("An adversarial client is started")
     def get_parameters(self, config):
         return dnn_model.get_weights()
     
-    def fit(self, parameters, config):
+    def fit(self, parameters, config):            
         dnn_model.set_weights(parameters)
+        
+        print("Train labels before flipping:")
+        train_labels_series = pd.Series(train_labels)
+        train_labels_series.index = range(len(train_labels))
+        print(train_labels)
+
+        # Shuffle the "MPG" values for the training data
+        adversarial_train_labels = flip_labels(train_labels)
+
+        print("Train labels after flipping:")
+        adversarial_train_labels_series = pd.Series(adversarial_train_labels)
+        adversarial_train_labels_series.index = range(len(train_labels))
+        print(adversarial_train_labels)
+
         dnn_model.fit(train_features,
-                    train_labels,
+                    adversarial_train_labels,
                     validation_split=0.2,
-                    epochs=500,
-                    batch_size=250,
+                    epochs=50,
+                    batch_size=25,
                     verbose=0
         )
         return dnn_model.get_weights(), len(train_features), {}
@@ -111,12 +134,7 @@ class FlowerClient(fl.client.NumPyClient):
         print(f"Loss: {loss}, r2_score: {r2_score}, mape {mape}")  
         # Make predictions on the test data
         test_predictions = dnn_model.predict(test_features).flatten()
-
-        #Save test predictions and labels to text file
-        with open(f"test_results_client{client_id}.txt", "w") as f:
-            for label, prediction in zip(test_labels, test_predictions):
-                f.write(f"Label: {label}, Prediction: {prediction}\n")
-                
+        
         return loss, len(test_features), {"r2_score": r2_score, "mape": mape}
-  
+        
 fl.client.start_numpy_client(server_address="127.0.0.1:8080", client=FlowerClient())

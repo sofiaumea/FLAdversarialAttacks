@@ -123,6 +123,6 @@ plt.tight_layout()
 plt.show()
 
 # Save the updated results in the text file
-with open(results_file, "w") as file:
-    for round_num, loss, r2_score in zip(round_numbers, loss_values, r2_score_values):
-        file.write(f"Round {round_num}: {loss}, {r2_score}\n")
+#with open(results_file, "w") as file:
+#    for round_num, loss, r2_score in zip(round_numbers, loss_values, r2_score_values):
+#        file.write(f"Round {round_num}: {loss}, {r2_score}\n")

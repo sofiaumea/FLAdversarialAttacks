@@ -72,6 +72,7 @@ test_labels = test_features.pop('median_house_value')
 #print("train labels from client",client_id, " : ", train_labels)
 #print("test labels from client",client_id, " : ", test_labels)
 print("train features from client",client_id, " : ", train_features)
+
 # Normalization
 normalizer = tf.keras.layers.Normalization(axis=-1)
 normalizer.adapt(np.array(train_features))
@@ -89,18 +90,34 @@ dnn_model.compile(
     optimizer="Adam",
     loss="mae",
     metrics=[R2Score(name='r2_score'), MeanAbsolutePercentageError(name='mape')])
-
+    
 class FlowerClient(fl.client.NumPyClient):
+    print("An adversarial client is started")
     def get_parameters(self, config):
         return dnn_model.get_weights()
     
     def fit(self, parameters, config):
+        print("Parameters before randomization: ", parameters)
+
+        # Non-malicious weights ranges from -1 to 1
+        min_value = -1
+        max_value = 1
+
+        # Randomly perturb only the 2D weight arrays
+        for i in range(len(parameters)):
+            if len(parameters[i].shape) == 2:
+                # Generate random numbers in the desired range
+                malicious_weights = np.random.uniform(min_value, max_value, size=parameters[i].shape).astype(np.float32)
+                parameters[i] = malicious_weights
+
+        print("Parameters after randomization: ", parameters)
+        
         dnn_model.set_weights(parameters)
         dnn_model.fit(train_features,
                     train_labels,
                     validation_split=0.2,
-                    epochs=500,
-                    batch_size=250,
+                    epochs=50,
+                    batch_size=25,
                     verbose=0
         )
         return dnn_model.get_weights(), len(train_features), {}
@@ -112,11 +129,6 @@ class FlowerClient(fl.client.NumPyClient):
         # Make predictions on the test data
         test_predictions = dnn_model.predict(test_features).flatten()
 
-        #Save test predictions and labels to text file
-        with open(f"test_results_client{client_id}.txt", "w") as f:
-            for label, prediction in zip(test_labels, test_predictions):
-                f.write(f"Label: {label}, Prediction: {prediction}\n")
-                
         return loss, len(test_features), {"r2_score": r2_score, "mape": mape}
-  
+    
 fl.client.start_numpy_client(server_address="127.0.0.1:8080", client=FlowerClient())
